@@ -39,7 +39,6 @@ void Shell() {
     char total_response[18384];
 
     while (TRUE) {
-        jump:
 		bzeroWin(buffer,1024);
 		bzeroWin(container, sizeof(container));
 		bzeroWin(total_response, sizeof(total_response));

