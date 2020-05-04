@@ -9,6 +9,7 @@
 
 #define bzeroWin(p, size) (void) memset((p), 0, (size))
 #define CONN_AMNT 5
+#define TRUE 1
 
 int main() {
     int sock, clientSocket;

